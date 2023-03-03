@@ -18,9 +18,10 @@ It will:
 import numpy as np
 import h5py
 import pandas as pd
+import shutils as sh
 
 "Range of snapshots to process"
-snapshot_max = 127
+snapshot_max = 127 liverpool
 snapshot_min = 50
 
 snapdir = "Data_proc/snapdir_{}"
@@ -32,5 +33,7 @@ group_file = "Data/groups_{}/fof_subhalo_tab_{}.0.hdf5" #Load in the 0th part
 with h5py.File(group_file.format(snapshot_max,snapshot_max),"r") as fof_main:
 	"Stores the positional information of the galaxy within the latest snapshot"
 	gal_pos = fof_main["Group/GroupCM"][0:][0]/fof_main["Header"].attrs["HubbleParam"]
+
+"Create copies of the snapshot for editing"
 
 	
