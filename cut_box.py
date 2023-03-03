@@ -18,22 +18,33 @@ It will:
 import numpy as np
 import h5py
 import pandas as pd
-import shutils as sh
+import shutil as sh
+import glob
+#========================= SETTINGS ======================================================#
 
 "Range of snapshots to process"
-snapshot_max = 127 liverpool
+snapshot_max = 127
 snapshot_min = 50
 
-snapdir = "Data_proc/snapdir_{}"
-file_name =  "snapshot_{}.full.hdf5"
+snapdir_folder = 'snapdir_{}'
+snapdir = "Data_proc/"+snapdir_folder
+file_name =  "snapshot_{}.{}.hdf5"
 group_file = "Data/groups_{}/fof_subhalo_tab_{}.0.hdf5" #Load in the 0th part
 
-
+#========================================================================================#
 "Find the center of the potential"
 with h5py.File(group_file.format(snapshot_max,snapshot_max),"r") as fof_main:
 	"Stores the positional information of the galaxy within the latest snapshot"
 	gal_pos = fof_main["Group/GroupCM"][0:][0]/fof_main["Header"].attrs["HubbleParam"]
 
 "Create copies of the snapshot for editing"
+"Find the current existing snapshots"
+snaps = glob.glob(snapdir.split(snapdir_folder)[0]+'*',recursive=True)
+"Convert them to integers to store"
+snap_nums = np.sort(np.unique(np.asarray([s.split("_")[-1] for s in snaps]).astype(int)))
 
+for s in snap_nums:
+	sh.copy(snapdir.format(s)+"/"+file_name.format(s,"full")
+	,snapdir.format(s)+"/"+file_name.format(s,"cut"))
+	snapdir.format(s)+"/"+file_name.format(s,"cut")
 	
