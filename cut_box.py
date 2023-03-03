@@ -25,6 +25,7 @@ import glob
 "Range of snapshots to process"
 snapshot_max = 127
 snapshot_min = 50
+box_size  = 6 #Mpc 
 
 snapdir_folder = 'snapdir_{}'
 snapdir = "Data_proc/"+snapdir_folder
@@ -44,7 +45,17 @@ snaps = glob.glob(snapdir.split(snapdir_folder)[0]+'*',recursive=True)
 snap_nums = np.sort(np.unique(np.asarray([s.split("_")[-1] for s in snaps]).astype(int)))
 
 for s in snap_nums:
+	temp_filename = snapdir.format(s)+"/"+file_name.format(s,"cut")
 	sh.copy(snapdir.format(s)+"/"+file_name.format(s,"full")
-	,snapdir.format(s)+"/"+file_name.format(s,"cut"))
-	snapdir.format(s)+"/"+file_name.format(s,"cut")
+	,temp_filename)
+	"""To-Do: 
+	- Load in copied file
+	- Loop over each part type - if a position is found move to the next step
+	- Convert all coordinates to the frame of "gal_pos"
+	- Cut the box
+	- Reset all the attributes to the original values
+	- Sanity check: Load galaxy box into pynbody and see if it works
+	"""
+	
+	
 	
