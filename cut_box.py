@@ -84,9 +84,11 @@ for s in snap_nums:
 					#if len(temp_array.shape)>1: #Check to see if the data is multidimensional (should be 1 or 3)
 					#	new_array = (temp_array[cond]).reshape(len(cond[0])//new_coords.shape[1],new_coords.shape[1])
 					#else:
-					new_array = temp_array[cond]
+
 					if sub_k == pos_header: #If the current dataset is equivalent to the positional information - apply the hubble multiplier
-						new_array *= h_box
+						new_array = new_coords[cond]*h_box
+					else:
+						new_array = temp_array[cond]
 
 					"Delete original array"
 					f.__delitem__('{}/{}'.format(key,sub_k))
