@@ -26,7 +26,7 @@ import os
 "Range of snapshots to process"
 snapshot_max = 127
 snapshot_min = 50
-box_size  = 6 #Mpc 
+box_size  = 3 #Mpc 
 
 snapdir_folder = 'snapdir_{}'
 snapdir = "Data_proc/"+snapdir_folder
@@ -34,6 +34,7 @@ file_name =  "snapshot_{}.{}.hdf5"
 group_file = "Data/groups_{}/fof_subhalo_tab_{}.0.hdf5" #Load in the 0th part
 
 pos_header = 'Coordinates' #name of positional information
+pos_tol = 0.1 #Tolerance value for the position - in Mpc
 
 #========================================================================================#
 "Find the center of the potential"
@@ -69,7 +70,7 @@ for s in snap_nums:
 			if pos_header in f[key]: #Check positional information is present
 				#print(key,True)
 				"Change coordinates"
-				new_coords = f[key][pos_header]/h_box - gal_pos #Converts coordinates to Mpc from Mpc/h
+				new_coords = f[key][pos_header]/h_box - gal_pos+pos_tol #Converts coordinates to Mpc from Mpc/h
 				x_cond = np.abs(np.asarray(new_coords.T[0]))<box_size/2
 				y_cond = np.abs(np.asarray(new_coords.T[1]))<box_size/2
 				z_cond = np.abs(np.asarray(new_coords.T[2]))<box_size/2
@@ -93,7 +94,8 @@ for s in snap_nums:
 					"Delete original array"
 					f.__delitem__('{}/{}'.format(key,sub_k))
 					"Renew array and attributes"
-					f[key][sub_k] = new_array
+					#f[key][sub_k] = new_array
+					f[key].create_dataset(sub_k,data=new_array,compression="gzip", compression_opts=9)
 					f[key][sub_k].attrs.update(f[key][sub_k+"_temp"].attrs)
 					"Clear temporary data"
 					f.__delitem__('{}/{}'.format(key,sub_k+"_temp"))
