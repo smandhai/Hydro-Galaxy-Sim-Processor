@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 import pynbody as pb
 from galpy.util.conversion import _G,parse_length,parse_mass
 import galpy.potential as pot
+import pickle
 #========================= SETTINGS ======================================================#
 
 "Range of snapshots to process"
