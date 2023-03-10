@@ -42,6 +42,7 @@ group_file = "Data/groups_{}/fof_subhalo_tab_{}.0.hdf5" #Load in the 0th part
 
 pos_header = 'Coordinates' #name of positional information
 pos_tol = 0.1 #Tolerance value for the position - in Mpc
+use_cut = False
 
 #========================================================================================#
 "Find the center of the potential"
@@ -56,7 +57,10 @@ snaps = glob.glob(snapdir.split(snapdir_folder)[0]+'*',recursive=True)
 snap_nums = np.sort(np.unique(np.asarray([s.split("_")[-1] for s in snaps]).astype(int)))
 
 for s in snap_nums:
-	temp_name = snapdir.format(s)+"/"+file_name.format(s,"cut")
+	if use_cut==True:
+		temp_name = snapdir.format(s)+"/"+file_name.format(s,"cut")
+	else:
+		temp_name = snapdir.format(s)+"/"+file_name.format(s,"full")
 	"""To-Do: 
 	- Load in copied file - Done
 	- Loop over each part type - if a position is found move to the next step - Done
@@ -67,12 +71,28 @@ for s in snap_nums:
 	"""
 	data = pb.load(temp_name)
 	print("First checkpoint: ",data["pos"])
-
+	if use_cut == True:
+		try:
+			print("First checkpoint: ",data["pos"])
+		except:
+			print("Data loading failed... trying each component")
+			print("Stellar Particles: ",data.s["pos"])
+			print("Gas Particles: ",data.g["pos"])
+			print("DM Particles: ",data.d["pos"])
+		finally:
+			print("Final attempt to check if data has loaded...\n")
+			print("First checkpoint: ",data["pos"])
+			
+	data.physical_units()
+	print("Second checkpoint (Unit change): ",data["pos"])
+	if use_cut == False:
+		data["pos"] -= gal_pos*1000
+	print("Third checkpoint (Centering)): ",data["pos"])
 	"Process snapshot data"
 	data._arrays['mass'] =  data['mass']
 	#data.s['phi'] = pb.array.SimArray(data.s['GravPotential'],'km^2 s^-2',dtype=np.float64)
-	data['pos'] = pb.array.SimArray(data['pos'],dtype=np.float64)
-	data._arrays['pos'] = pb.array.SimArray(data['pos'],dtype=np.float64)
+	data['pos'] = pb.array.SimArray(data['pos'],'kpc',dtype=np.float64)
+	data._arrays['pos'] = pb.array.SimArray(data['pos'],'kpc',dtype=np.float64)
 	data.s['eps'] = pb.array.SimArray(np.tile(0.369,len(data.s['mass'])),'kpc',dtype=np.float64)
 	data.g['eps'] = pb.array.SimArray(np.tile(0.369,len(data.g['mass'])),'kpc',dtype=np.float64)
 	data.dm['eps'] = pb.array.SimArray(np.tile(0.369,len(data.dm['mass'])),'kpc',dtype=np.float64)
@@ -86,18 +106,17 @@ for s in snap_nums:
 	data._arrays['mass']= data._arrays['mass']*g
 
 	os.sync()
-	data.physical_units()
-	print("Second checkpoint: ",data["pos"])
-	#data["pos"] -= gal_pos*1000
-	#print("Third checkpoint: "data["pos"])
+
+
+	#data._arrays["pos"] -= gal_pos*1000
+
 	data_cut = data[pb.filt.BandPass('x', '-1000 kpc','1000 kpc')]
 	data_cut = data_cut[pb.filt.BandPass('y', '-1000 kpc','1000 kpc')]
-	data_cut = data_cut[pb.filt.BandPass('z', '-1000 kpc','1000 kpc')]
 	data_cut = data_cut[pb.filt.BandPass('z', '-1000 kpc','1000 kpc')]
 	"Remove stellar wind particles"     
 	data_cut.s["GFM_StellarFormationTime"].units = "Gyr"
 	data_cut.s = data_cut.s[pb.filt.HighPass("GFM_StellarFormationTime",'0 Gyr')]
-	print("Third Checkpoint: ",data_cut["pos"])
+	print("Fourth Checkpoint (Box and Stellar Wind cuts): ",data_cut["pos"])
 	pb.analysis.angmom.faceon(data_cut.s)
 	#pb.plot.sph.image(data_cut.s,qty='rho',units="g cm^-3",width=100,cmap='Greys')
 	#plt.savefig("test_plot_ss-{}.png".format(s))
@@ -125,7 +144,8 @@ for s in snap_nums:
 
 
 	"For the dark matter halo and the galaxy potential"
-	spi_dm= pot.InterpSnapshotRZPotential(data_cut.d,rgrid=(np.log10(1e-4),np.log10(1e3),101),logR=True,zgrid=(-60.,60.,101),interpPot=True,zsym=False,enable_c=True,numcores=4)
+	spi_dm= pot.InterpSnapshotRZPotential(data_cut.d,rgrid=(np.log10(1e-4),np.log10(1e3),101),logR=True,zgrid=(-60.,60.,101),interpepifreq=True,
+	interpverticalfreq=True,interpPot=True,zsym=False,enable_c=True,numcores=4)
 	spi_gas= pot.InterpSnapshotRZPotential(data_cut.g,rgrid=(np.log10(1e-4),np.log10(1e3),101),logR=True,zgrid=(-60.,60.,101),interpepifreq=True,
 	interpverticalfreq=True,interpPot=True,zsym=False,enable_c=True,numcores=4)
 
